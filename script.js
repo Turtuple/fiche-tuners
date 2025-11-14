@@ -157,30 +157,29 @@ function updateWeekPanel(wk, list) {
   $("#weekKeyText").textContent = wk;
   $("#weekRangeText").textContent = r.start + " → " + r.end;
 
-  var statsEl = $("#weekStatsText");
-  if (!statsEl) return;
-
   var totalBase = 0;
-  var totalPay = 0;
-  var rep = 0;
-  var cus = 0;
+  var totalPay  = 0;
+  var rep       = 0;
+  var cus       = 0;
 
   list.forEach(function (row) {
-    totalBase += Number(row.base) || 0;
-    totalPay += Number(row.total) || 0;
+    totalBase += Number(row.base)  || 0;
+    totalPay  += Number(row.total) || 0;
     if (row.type === "rep") rep++;
     if (row.type === "cus") cus++;
   });
 
-  statsEl.textContent =
-    "Chiffre d'affaire: " +
-    money(totalBase) +
-    " • À payer: " +
-    money(totalPay) +
-    " • Réparations: " +
-    rep +
-    " • Customs: " +
-    cus;
+  var elTotal = $("#weekTotalAmount");
+  if (elTotal) elTotal.textContent = money(totalPay);
+
+  var elActions = $("#weekActionsCount");
+  if (elActions) elActions.textContent = list.length;
+
+  var elRep = $("#weekRepairsCount");
+  if (elRep) elRep.textContent = rep;
+
+  var elCus = $("#weekCustomsCount");
+  if (elCus) elCus.textContent = cus;
 }
 
 function render() {
@@ -439,3 +438,4 @@ $("#pageSizeSelect").addEventListener("change", function () {
 $("#exportDiscordButton").addEventListener("click", exportCurrentWeekToDiscord);
 
 initSelectors();
+
