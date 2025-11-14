@@ -15,7 +15,9 @@ var EMP = [
 
 var LS_KEY = 'fiche_paie_entries_v6';
 
-var DISCORD_WEBHOOK = "https://discordapp.com/api/webhooks/1438915757898469386/dZ7HjeO-pU4O9y_NL_-KTb7eb8Jjt0ohG-aiZsfb2cCnKG0EruTKq4_buCvYp_3dFkRk";
+var DISCORD_WEBHOOK_FICHE  = "https://discordapp.com/api/webhooks/1438918928951672882/3tufNFwGiXhDwFi4nDF8YmIGaz1I1ymGWIpLNoCA3Venv1uIOQkeuod6Zc4mdwBOqtaQ";
+var DISCORD_WEBHOOK_ENTREE = "https://discordapp.com/api/webhooks/1438915757898469386/dZ7HjeO-pU4O9y_NL_-KTb7eb8Jjt0ohG-aiZsfb2cCnKG0EruTKq4_buCvYp_3dFkRk";
+
 var ENABLE_DISCORD_LOG_ON_ADD = true;
 
 function $(sel){ return document.querySelector(sel); }
@@ -25,7 +27,7 @@ function isoToday(){ var d=new Date(); d.setMinutes(d.getMinutes()-d.getTimezone
 function weekKey(iso){
   var d=new Date(iso);
   var target=new Date(d.valueOf());
-  var dayNr=(d.getDay()+6)%7; // lundi = 0
+  var dayNr=(d.getDay()+6)%7;
   target.setDate(target.getDate()-dayNr+3);
   var firstThu=new Date(target.getFullYear(),0,4);
   var week=1+Math.round(((target-firstThu)/86400000 - 3 + ((firstThu.getDay()+6)%7))/7);
@@ -148,24 +150,41 @@ function render(){
 }
 
 function buildDiscordText(list, wk, name){
-  var total=0, rep=0, cus=0;
-  for(var i=0;i<list.length;i++){
-    total += Number(list[i].total) || 0;
-    if(list[i].type==='rep') rep++;
-    if(list[i].type==='cus') cus++;
+  var totalBase = 0;
+  var totalPay  = 0;
+  var rep = 0, cus = 0;
+
+  for (var i = 0; i < list.length; i++) {
+    var r = list[i];
+    totalBase += Number(r.base)  || 0;
+    totalPay  += Number(r.total) || 0;
+    if (r.type === 'rep') rep++;
+    if (r.type === 'cus') cus++;
   }
+
   var lines = list.map(r =>
     `${r.date} | ${r.empNom} | ${r.grade} | ${(r.type==='rep'?'Réparation':'Custom')} | base ${money(r.base)} | ${Math.round(r.pct*100)}% => ${money(r.total)}`
   ).join('\n');
 
   return `**FICHE DE PAIE (${name}) — Semaine ${wk}**\n` +
-         `Total: ${money(total)} | Réparations: ${rep} | Customisations: ${cus}\n` +
+         `Montant à payer: ${money(totalPay)} | Chiffre d'affaire: ${money(totalBase)} | Réparations: ${rep} | Customisations: ${cus}\n` +
          `\`\`\`\n${lines || 'Aucune entrée'}\n\`\`\``;
 }
 
-function sendDiscord(text){
-  return fetch(DISCORD_WEBHOOK, {
-    method:'POST', headers:{'Content-Type':'application/json'},
+function sendDiscord(text, target){
+  var url = null;
+
+  if (target === 'fiche') url = DISCORD_WEBHOOK_FICHE;
+  if (target === 'entree') url = DISCORD_WEBHOOK_ENTREE;
+
+  if (!url) {
+    console.warn("Webhook missing for", target);
+    return Promise.resolve();
+  }
+
+  return fetch(url, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
     body: JSON.stringify({content:text})
   });
 }
@@ -178,7 +197,7 @@ function exportCurrentWeekToDiscord(){
   var name  = emp ? emp.nom : 'Tous les employés';
   var text = buildDiscordText(list, wk, name);
 
-  sendDiscord(text)
+  sendDiscord(text, 'fiche')
     .then(()=> alert('Export envoyé sur Discord.'))
     .catch(()=> alert('Erreur d\'envoi Discord.'));
 }
@@ -207,7 +226,8 @@ function add(){
           + '```\n' + rec.date + ' | ' + rec.empNom + ' | ' + rec.grade + ' | '
           + (rec.type==='rep'?'Réparation':'Custom') + ' | base ' + money(rec.base)
           + ' | ' + Math.round(rec.pct*100) + '% => ' + money(rec.total) + '\n```';
-    sendDiscord(t);
+
+    sendDiscord(t, 'entree');
   }
 }
 
@@ -244,6 +264,4 @@ $('#nextPageBtn').addEventListener('click', function(){ currentPage++; render();
 $('#pageSizeSelect').addEventListener('change', function(){ currentPage=1; render(); });
 $('#exportDiscordButton').addEventListener('click', exportCurrentWeekToDiscord);
 
-
 initSelectors();
-
