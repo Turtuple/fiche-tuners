@@ -15,7 +15,7 @@ var EMP = [
 
 var LS_KEY = 'fiche_paie_entries_v6';
 
-var DISCORD_WEBHOOK = "";
+var DISCORD_WEBHOOK = "https://discordapp.com/api/webhooks/1438914858195091617/TsN__3hdAXUtex-rhUyw8qN7HgDDxmZSMa1E-k_-sSwJ-io7OaQHPdm6Z79PgV_4EiEw";
 var ENABLE_DISCORD_LOG_ON_ADD = true;
 
 function $(sel){ return document.querySelector(sel); }
@@ -243,5 +243,6 @@ $('#prevPageBtn').addEventListener('click', function(){ currentPage--; render();
 $('#nextPageBtn').addEventListener('click', function(){ currentPage++; render(); });
 $('#pageSizeSelect').addEventListener('change', function(){ currentPage=1; render(); });
 $('#exportDiscordButton').addEventListener('click', exportCurrentWeekToDiscord);
+
 
 initSelectors();
